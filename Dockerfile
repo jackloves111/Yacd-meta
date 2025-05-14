@@ -23,11 +23,13 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install Nginx and other utilities
-RUN apk add --no-cache nginx
+RUN apk add --no-cache nginx dos2unix
 
 # Copy and install Python dependencies
 COPY python/ .
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
 
 # Create Clash config directory (if still needed by the python app from Dockerfile-python)
 RUN mkdir -p /root/.config/clash
@@ -43,12 +45,9 @@ ENV YACD_DEFAULT_BACKEND "http://127.0.0.1:9090"
 EXPOSE 80
 EXPOSE 7888
 
-# Copy Python application from backend builder stage to /app (final image's WORKDIR)
-COPY python/ .
-
 # Copy and prepare entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh && dos2unix /docker-entrypoint.sh
 
 # Command to run the entrypoint script
 CMD ["/docker-entrypoint.sh"]
