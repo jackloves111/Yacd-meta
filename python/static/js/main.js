@@ -64,4 +64,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // 滚动到状态卡片
         statusCard.scrollIntoView({ behavior: 'smooth' });
     }
-}); 
+});
+
+// 新增配置加载功能
+function loadConfig() {
+    fetch('/get_config')
+        .then(response => {
+            if (!response.ok) throw new Error('配置加载失败');
+            return response.text();
+        })
+        .then(text => {
+            document.getElementById('configContent').textContent = text;
+        })
+        .catch(error => {
+            document.getElementById('configContent').textContent = error.message;
+        });
+}
+
+// 页面加载时自动获取配置
+document.addEventListener('DOMContentLoaded', loadConfig);

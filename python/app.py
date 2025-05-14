@@ -75,6 +75,15 @@ def update_config():
         logger.error(f"发生异常: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": f"更新失败: {str(e)}"}), 500
 
+@app.route('/get_config')
+def get_config():
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"读取配置文件失败: {str(e)}")
+        return "当前没有可用配置", 404
+
 if __name__ == '__main__':
     logger.info("Python 订阅应用启动在 0.0.0.0:7888")
     app.run(host='0.0.0.0', port=7888, debug=False)

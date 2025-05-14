@@ -36,18 +36,19 @@
             </div>
         </div>
         
-        <div class="info-section">
-            <h3>功能说明</h3>
-            <p>该工具将执行以下操作：</p>
-            <ol>
-                <li>下载指定订阅地址的配置文件</li>
-                <li>修改配置文件中的端口设置</li>
-                <li>替换 external-controller 设置</li>
-                <li>尝试重新加载 Clash 配置</li>
-            </ol>
+        <div class="config-section">
+            <h3>当前配置文件内容</h3>
+            <div class="config-container">
+                <pre class="config-content" id="configContent">加载配置中...</pre>
+            </div>
+            <div class="config-actions">
+                <button class="btn btn-refresh" onclick="loadConfig()">
+                    <i class="icon-refresh"></i> 刷新配置
+                </button>
+            </div>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
-</html> 
+</html>
