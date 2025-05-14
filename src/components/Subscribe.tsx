@@ -342,14 +342,6 @@ function Subscribe() {
           <div style={configContainerStyle}>
             <pre style={preStyle}>{configContent}</pre>
           </div>
-          <div style={{ marginTop: '10px', textAlign: 'right' }}>
-            <button
-              onClick={loadConfig}
-              style={{ ...buttonStyle, background: '#7f8c8d' }}
-            >
-              {t('刷新配置')}
-            </button>
-          </div>
         </div>
         
         <div style={debugStyle}>
