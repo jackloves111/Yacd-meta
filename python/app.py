@@ -25,11 +25,74 @@ CLASH_CONFIG_PATH = '/root/.config/clash/config.yaml'
 # 确保配置目录存在
 os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
+def get_subscribe_url_from_config():
+    """从配置文件中获取保存的订阅地址"""
+    if not os.path.exists(CONFIG_FILE):
+        return ""
+        
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # 使用正则表达式从配置文件中提取订阅地址
+        # 格式: # SUBSCRIBE_URL: http://example.com
+        match = re.search(r'# SUBSCRIBE_URL: (.*?)(\r?\n|$)', content)
+        if match:
+            return match.group(1).strip()
+        return ""
+    except Exception as e:
+        logger.error(f"从配置文件中获取订阅地址失败: {str(e)}")
+        return ""
+
+def save_subscribe_url_to_config(subscribe_url, content=None):
+    """将订阅地址保存到配置文件"""
+    if not os.path.exists(CONFIG_FILE):
+        # 如果配置文件不存在，创建一个包含订阅地址的空配置
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            f.write(f"# SUBSCRIBE_URL: {subscribe_url}\n")
+        return True
+        
+    try:
+        if content is None:
+            # 读取现有配置
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                content = f.read()
+        
+        # 检查是否已有订阅地址标记
+        if re.search(r'# SUBSCRIBE_URL:', content):
+            # 更新现有的订阅地址
+            content = re.sub(r'# SUBSCRIBE_URL: .*?(\r?\n|$)', 
+                            f"# SUBSCRIBE_URL: {subscribe_url}\n", content)
+        else:
+            # 在文件开头添加订阅地址
+            content = f"# SUBSCRIBE_URL: {subscribe_url}\n" + content
+        
+        # 保存修改后的配置
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        logger.info(f"订阅地址已保存到配置文件: {subscribe_url}")
+        return True
+    except Exception as e:
+        logger.error(f"保存订阅地址到配置文件失败: {str(e)}")
+        return False
+
 @app.route('/')
 def index():
     """渲染主页"""
     logger.info("访问订阅页面")
     return render_template('index.html')
+
+@app.route('/get_subscribe_info')
+def get_subscribe_info():
+    """获取保存的订阅信息"""
+    try:
+        subscribe_url = get_subscribe_url_from_config()
+        logger.info(f"获取订阅地址: {subscribe_url}")
+        return jsonify({"subscribe_url": subscribe_url})
+    except Exception as e:
+        logger.error(f"获取订阅信息失败: {str(e)}")
+        return jsonify({"subscribe_url": ""}), 500
 
 @app.route('/update_config', methods=['POST', 'OPTIONS'])
 def update_config():
@@ -66,8 +129,15 @@ def update_config():
             logger.error(f"下载失败，异常: {str(e)}")
             return jsonify({"status": "error", "message": f"下载订阅配置失败: {str(e)}"}), 500
         
+        # 获取配置内容并添加订阅地址
+        config_content = response.content.decode('utf-8')
+        
         # 保存配置文件
         try:
+            # 首先保存带有订阅地址的配置
+            save_subscribe_url_to_config(subscribe_url, config_content)
+            
+            # 然后保存配置文件
             with open(CONFIG_FILE, 'wb') as f:
                 f.write(response.content)
             logger.info(f"配置文件已保存到: {CONFIG_FILE}")
@@ -94,10 +164,8 @@ def update_config():
             content = re.sub(r'mixed-port: 7890', 'port: 7890\nsocks-port: 7891', content)
             content = re.sub(r"external-controller: '127.0.0.1:9090'", "external-controller: '0.0.0.0:9090'", content)
             
-            # 保存修改后的配置
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                f.write(content)
-            logger.info("配置文件已修改")
+            # 再次保存修改后的配置，确保订阅地址不丢失
+            save_subscribe_url_to_config(subscribe_url, content)
             
             # 检查文件是否存在并且有内容
             if os.path.exists(CONFIG_FILE) and os.path.getsize(CONFIG_FILE) > 0:
@@ -143,13 +211,17 @@ def health_check():
     """健康检查接口"""
     config_exists = os.path.exists(CONFIG_FILE)
     config_size = os.path.getsize(CONFIG_FILE) if config_exists else 0
+    subscribe_url = get_subscribe_url_from_config()
     
     return jsonify({
         "status": "ok", 
         "message": "服务正常运行",
         "config_file": CONFIG_FILE,
         "config_exists": config_exists,
-        "config_size": config_size
+        "config_size": config_size,
+        "subscribe_info": {
+            "subscribe_url": subscribe_url
+        }
     })
 
 if __name__ == '__main__':
