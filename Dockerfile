@@ -41,9 +41,8 @@ COPY --from=builder-frontend /app/public /usr/share/nginx/html
 # Set default backend URL for YACD (can be overridden at runtime)
 ENV YACD_DEFAULT_BACKEND "http://127.0.0.1:9090"
 
-# Expose Nginx port (80) and Python app port (e.g., 7888 from Dockerfile-python)
+# Expose only Nginx port (80), remove Python app port
 EXPOSE 80
-EXPOSE 7888
 
 # Copy and prepare entrypoint script
 COPY docker-entrypoint.sh /
