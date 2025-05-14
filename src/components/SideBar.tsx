@@ -83,7 +83,7 @@ const pages = [
   {
     to: '/logs2',
     iconId: 'settings',
-    labelText: 'Logs2',
+    labelText: '订阅',
   },
 ];
 
