@@ -80,6 +80,11 @@ const pages = [
     iconId: 'file',
     labelText: 'Logs',
   },
+  {
+    to: '/logs2',
+    iconId: 'settings',
+    labelText: 'Logs2',
+  },
 ];
 
 const mapState = (s) => ({

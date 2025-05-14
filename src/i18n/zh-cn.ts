@@ -6,6 +6,7 @@ export const data = {
   Conns: '连接',
   Config: '配置',
   Logs: '日志',
+  Logs2: '订阅',
   Upload: '上传',
   Download: '下载',
   'Upload Total': '上传总量',
