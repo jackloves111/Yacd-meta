@@ -24,7 +24,7 @@ const { lazy, Suspense } = React;
 const Connections = lazy(() => import('~/components/Connections'));
 const Config = lazy(() => import('~/components/Config'));
 const Logs = lazy(() => import('~/components/Logs'));
-const subscribe = lazy(() => import('~/components/subscribe'));
+const Subscribe = lazy(() => import('~/components/Subscribe'));
 const Proxies = lazy(() => import('~/components/proxies/Proxies'));
 const Rules = lazy(() => import('~/components/Rules'));
 
@@ -33,7 +33,7 @@ const routes = [
   { path: '/connections', element: <Connections /> },
   { path: '/configs', element: <Config /> },
   { path: '/logs', element: <Logs /> },
-  { path: '/subscribe', element: <subscribe /> },
+  { path: '/subscribe', element: <Subscribe /> },
   { path: '/proxies', element: <Proxies /> },
   { path: '/rules', element: <Rules /> },
   { path: '/about', element: <About /> },
