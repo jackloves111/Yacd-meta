@@ -17,10 +17,9 @@ app = Flask(__name__, static_url_path='/static')
 # 启用CORS
 CORS(app)
 
-# 配置文件路径 - 使用绝对路径确保一致性
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(CURRENT_DIR, 'config.yaml')
+# 配置文件路径 - 使用统一的配置文件路径
 CLASH_CONFIG_PATH = '/root/.config/clash/config.yaml'
+CONFIG_FILE = CLASH_CONFIG_PATH  # 使用统一的配置文件路径
 
 # 确保配置目录存在
 os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
@@ -28,6 +27,7 @@ os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 def get_subscribe_url_from_config():
     """从配置文件中获取保存的订阅地址"""
     if not os.path.exists(CONFIG_FILE):
+        logger.warning("配置文件不存在，无法获取订阅地址")
         return ""
         
     try:
@@ -37,8 +37,11 @@ def get_subscribe_url_from_config():
         # 使用正则表达式从配置文件中提取订阅地址
         # 格式: # SUBSCRIBE_URL: http://example.com
         match = re.search(r'# SUBSCRIBE_URL: (.*?)(\r?\n|$)', content)
-        if match:
+        if match and match.group(1).strip():
+            logger.info(f"从配置文件中获取到订阅地址: {match.group(1).strip()}")
             return match.group(1).strip()
+        
+        logger.info("配置文件中未找到有效的订阅地址")
         return ""
     except Exception as e:
         logger.error(f"从配置文件中获取订阅地址失败: {str(e)}")
@@ -46,11 +49,20 @@ def get_subscribe_url_from_config():
 
 def save_subscribe_url_to_config(subscribe_url, content=None):
     """将订阅地址保存到配置文件"""
+    # 移除订阅地址中可能已有的&flag=clash或?flag=clash
+    clean_url = re.sub(r'[&?]flag=clash$', '', subscribe_url)
+    
     if not os.path.exists(CONFIG_FILE):
         # 如果配置文件不存在，创建一个包含订阅地址的空配置
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            f.write(f"# SUBSCRIBE_URL: {subscribe_url}\n")
-        return True
+        logger.info(f"配置文件不存在，创建新文件: {CONFIG_FILE}")
+        try:
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                f.write(f"# SUBSCRIBE_URL: {clean_url}\n")
+            logger.info(f"创建了包含订阅地址的新配置文件: {clean_url}")
+            return True
+        except Exception as e:
+            logger.error(f"创建配置文件失败: {str(e)}")
+            return False
         
     try:
         if content is None:
@@ -61,21 +73,38 @@ def save_subscribe_url_to_config(subscribe_url, content=None):
         # 检查是否已有订阅地址标记
         if re.search(r'# SUBSCRIBE_URL:', content):
             # 更新现有的订阅地址
-            content = re.sub(r'# SUBSCRIBE_URL: .*?(\r?\n|$)', 
-                            f"# SUBSCRIBE_URL: {subscribe_url}\n", content)
+            new_content = re.sub(r'# SUBSCRIBE_URL: .*?(\r?\n|$)', 
+                            f"# SUBSCRIBE_URL: {clean_url}\n", content)
+            logger.info(f"更新了现有的订阅地址: {clean_url}")
         else:
             # 在文件开头添加订阅地址
-            content = f"# SUBSCRIBE_URL: {subscribe_url}\n" + content
+            new_content = f"# SUBSCRIBE_URL: {clean_url}\n" + content
+            logger.info(f"添加了新的订阅地址: {clean_url}")
         
         # 保存修改后的配置
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            f.write(content)
+            f.write(new_content)
             
-        logger.info(f"订阅地址已保存到配置文件: {subscribe_url}")
+        logger.info(f"订阅地址已保存到配置文件: {clean_url}")
         return True
     except Exception as e:
         logger.error(f"保存订阅地址到配置文件失败: {str(e)}")
         return False
+
+def add_clash_flag_to_url(url):
+    """向URL添加flag=clash参数"""
+    if not url:
+        return url
+        
+    # 如果已经有flag=clash就不再添加
+    if 'flag=clash' in url:
+        return url
+        
+    # 添加flag=clash
+    if '?' in url:
+        return f"{url}&flag=clash"
+    else:
+        return f"{url}?flag=clash"
 
 @app.route('/')
 def index():
@@ -88,8 +117,11 @@ def get_subscribe_info():
     """获取保存的订阅信息"""
     try:
         subscribe_url = get_subscribe_url_from_config()
-        logger.info(f"获取订阅地址: {subscribe_url}")
-        return jsonify({"subscribe_url": subscribe_url})
+        logger.info(f"获取订阅地址API: {subscribe_url}")
+        
+        # 确保返回有效的JSON响应
+        response = {"subscribe_url": subscribe_url}
+        return jsonify(response)
     except Exception as e:
         logger.error(f"获取订阅信息失败: {str(e)}")
         return jsonify({"subscribe_url": ""}), 500
@@ -111,47 +143,37 @@ def update_config():
             logger.error("订阅地址为空")
             return jsonify({"status": "error", "message": "订阅地址不能为空"}), 400
         
-        # 确保URL末尾有clash标志
-        if '&flag=clash' not in subscribe_url and '?flag=clash' not in subscribe_url:
-            if '?' in subscribe_url:
-                subscribe_url += '&flag=clash'
-            else:
-                subscribe_url += '?flag=clash'
+        # 先保存订阅地址，确保地址不会丢失
+        # 这里保存原始地址，不添加flag=clash
+        save_subscribe_url_to_config(subscribe_url)
         
-        logger.info(f"处理后的订阅URL: {subscribe_url}")
+        # 为下载添加flag=clash
+        download_url = add_clash_flag_to_url(subscribe_url)
+        logger.info(f"下载用的订阅URL: {download_url}")
         
         # 下载配置文件
         logger.info("正在下载配置文件...")
         try:
-            response = requests.get(subscribe_url, timeout=30)
+            response = requests.get(download_url, timeout=30)
             response.raise_for_status()  # 检查HTTP错误
         except requests.exceptions.RequestException as e:
             logger.error(f"下载失败，异常: {str(e)}")
             return jsonify({"status": "error", "message": f"下载订阅配置失败: {str(e)}"}), 500
         
-        # 获取配置内容并添加订阅地址
-        config_content = response.content.decode('utf-8')
-        
-        # 保存配置文件
+        # 获取配置内容
         try:
-            # 首先保存带有订阅地址的配置
-            save_subscribe_url_to_config(subscribe_url, config_content)
+            config_content = response.content.decode('utf-8')
             
-            # 然后保存配置文件
-            with open(CONFIG_FILE, 'wb') as f:
-                f.write(response.content)
-            logger.info(f"配置文件已保存到: {CONFIG_FILE}")
+            # 保存配置文件前先应用订阅地址
+            # 使用原始地址，而不是带flag=clash的
+            config_with_url = f"# SUBSCRIBE_URL: {subscribe_url}\n" + config_content
             
-            # 复制到Clash配置目录（如果需要）
-            try:
-                os.makedirs(os.path.dirname(CLASH_CONFIG_PATH), exist_ok=True)
-                with open(CLASH_CONFIG_PATH, 'wb') as clash_file:
-                    clash_file.write(response.content)
-                logger.info(f"配置文件已复制到Clash目录: {CLASH_CONFIG_PATH}")
-            except Exception as e:
-                logger.warning(f"复制到Clash目录失败: {str(e)}")
-                # 这不是致命错误，继续处理
-        except IOError as e:
+            # 直接写入带有订阅地址的配置
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                f.write(config_with_url)
+                
+            logger.info(f"配置文件(含订阅地址)已保存到: {CONFIG_FILE}")
+        except Exception as e:
             logger.error(f"保存配置文件失败: {str(e)}")
             return jsonify({"status": "error", "message": f"保存配置文件失败: {str(e)}"}), 500
         
@@ -164,8 +186,11 @@ def update_config():
             content = re.sub(r'mixed-port: 7890', 'port: 7890\nsocks-port: 7891', content)
             content = re.sub(r"external-controller: '127.0.0.1:9090'", "external-controller: '0.0.0.0:9090'", content)
             
-            # 再次保存修改后的配置，确保订阅地址不丢失
-            save_subscribe_url_to_config(subscribe_url, content)
+            # 保存修改后的配置，确保订阅地址不丢失
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+            logger.info("配置文件已修改并保存")
             
             # 检查文件是否存在并且有内容
             if os.path.exists(CONFIG_FILE) and os.path.getsize(CONFIG_FILE) > 0:
@@ -228,7 +253,14 @@ if __name__ == '__main__':
     logger.info(f"Python 订阅应用启动在 0.0.0.0:7888，配置文件路径: {CONFIG_FILE}")
     # 确保配置目录存在
     os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
-    os.makedirs(os.path.dirname(CLASH_CONFIG_PATH), exist_ok=True)
+    
+    # 在启动时记录配置文件状态
+    config_exists = os.path.exists(CONFIG_FILE)
+    logger.info(f"配置文件存在: {config_exists}")
+    
+    if config_exists:
+        subscribe_url = get_subscribe_url_from_config()
+        logger.info(f"当前订阅地址: {subscribe_url}")
     
     # 启动Flask应用
     app.run(host='0.0.0.0', port=7888, debug=False)

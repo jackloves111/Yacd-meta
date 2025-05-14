@@ -1,4 +1,4 @@
-# Stage 1: Build frontend
+# 第一阶段：构建前端
 FROM --platform=$BUILDPLATFORM node:alpine AS builder-frontend
 WORKDIR /app
 RUN npm i -g pnpm
@@ -6,47 +6,45 @@ COPY pnpm-lock.yaml package.json ./
 RUN pnpm i
 COPY . .
 RUN pnpm build \
-  # remove source maps - people like small image
+  # 移除source map文件以减小镜像体积
   && rm public/*.map || true
 
-# Stage 2: Prepare Python backend and final image
+# 第二阶段：准备Python后端及最终镜像
 FROM python:3.9-alpine
 
-# Copy Nginx configuration files
+# 复制Nginx配置文件
 COPY docker/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 
 WORKDIR /app
 
-# Set environment variables for Python
+# 设置Python环境变量
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install Nginx and other utilities
+# 安装Nginx及其他工具
 RUN apk add --no-cache nginx dos2unix
 
-# Copy and install Python dependencies
+# 复制并安装Python依赖
 COPY python/ .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-
-# Create Clash config directory (if still needed by the python app from Dockerfile-python)
+# 创建Clash配置目录
 RUN mkdir -p /root/.config/clash
 
-# Remove default Nginx content and copy built frontend assets
+# 移除默认Nginx内容并复制构建好的前端资源
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder-frontend /app/public /usr/share/nginx/html
 
-# Set default backend URL for YACD (can be overridden at runtime)
+# 设置YACD默认后端URL（可在运行时覆盖）
 ENV YACD_DEFAULT_BACKEND "http://127.0.0.1:9090"
 
-# Expose only Nginx port (80), remove Python app port
+# 仅暴露Nginx端口(80)
 EXPOSE 80
 
-# Copy and prepare entrypoint script
+# 复制并准备入口点脚本
 COPY docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh && dos2unix /docker-entrypoint.sh
 
-# Command to run the entrypoint script
+# 运行入口点脚本的命令
 CMD ["/docker-entrypoint.sh"]

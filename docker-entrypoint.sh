@@ -6,11 +6,24 @@ sed -i "s|http://127.0.0.1:9090|$YACD_DEFAULT_BACKEND|" /usr/share/nginx/html/in
 echo "配置Nginx和Python环境..."
 # 确保配置目录存在
 mkdir -p /root/.config/clash
-mkdir -p /app/python
 
-# 创建一个测试配置文件以确保权限正确
-echo "# 测试配置" > /app/python/config.yaml
-chmod 666 /app/python/config.yaml
+# 调试信息
+echo "检查默认配置文件是否存在..."
+# 如果配置文件不存在，创建一个空的配置文件
+if [ ! -f "/root/.config/clash/config.yaml" ]; then
+    echo "# SUBSCRIBE_URL: " > /root/.config/clash/config.yaml
+    echo "创建了空的配置文件"
+fi
+
+# 检查配置文件是否有订阅地址
+if ! grep -q "SUBSCRIBE_URL" /root/.config/clash/config.yaml; then
+    # 如果没有订阅地址标记，添加一个
+    sed -i '1i# SUBSCRIBE_URL: ' /root/.config/clash/config.yaml
+    echo "添加了订阅地址标记"
+fi
+
+# 确保配置文件权限正确
+chmod 666 /root/.config/clash/config.yaml
 echo "配置文件权限已设置"
 
 # 调试信息
