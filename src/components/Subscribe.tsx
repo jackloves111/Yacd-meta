@@ -17,12 +17,12 @@ function Logs() {
 
   return (
     <div>
-      <ContentHeader title={t('Logs')} />
+      <ContentHeader title={t('订阅')} />
       <div ref={refLogsContainer}>
         <iframe 
           src="https://0.0.0.0:7888/" 
           style={iframeStyle} 
-          title="Logs Frame"
+          title="订阅"
         />
       </div>
     </div>

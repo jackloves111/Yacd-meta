@@ -81,7 +81,7 @@ const pages = [
     labelText: 'Logs',
   },
   {
-    to: '/logs2',
+    to: '/subscribe',
     iconId: 'settings',
     labelText: '订阅',
   },
