@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订阅配置更新工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Clash 订阅配置更新工具</h1>
+        
+        <div class="card">
+            <div class="card-body">
+                <form id="updateForm">
+                    <div class="form-group">
+                        <label for="subscribe_url">订阅地址 (SUBSCRIBE_URL)</label>
+                        <input type="text" id="subscribe_url" name="subscribe_url" 
+                               placeholder="请输入您的订阅地址" required 
+                               class="form-control">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" id="updateBtn" class="btn btn-primary">
+                            更新配置
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="statusCard" class="card status-card hidden">
+            <div class="card-body">
+                <h3 id="statusTitle">处理结果</h3>
+                <p id="statusMessage"></p>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h3>功能说明</h3>
+            <p>该工具将执行以下操作：</p>
+            <ol>
+                <li>下载指定订阅地址的配置文件</li>
+                <li>修改配置文件中的端口设置</li>
+                <li>替换 external-controller 设置</li>
+                <li>尝试重新加载 Clash 配置</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

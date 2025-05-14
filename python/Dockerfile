@@ -1,0 +1,24 @@
+FROM python:3.9-alpine
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# 安装依赖
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制应用程序代码
+COPY . .
+
+# 创建Clash配置目录
+RUN mkdir -p /root/.config/clash
+
+# 暴露端口
+EXPOSE 7888 80
+
+# 启动应用
+CMD ["python", "app.py"] 
