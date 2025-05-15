@@ -29,72 +29,7 @@ DEFAULT_CLASH_PORT = 9090
 # 确保配置目录存在
 os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
-def get_subscribe_url_from_config():
-    """从配置文件中获取保存的订阅地址"""
-    if not os.path.exists(CONFIG_FILE):
-        logger.warning("配置文件不存在，无法获取订阅地址")
-        return ""
-        
-    try:
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            content = f.read()
-            
-        # 使用正则表达式从配置文件中提取订阅地址
-        # 格式: # SUBSCRIBE_URL: http://example.com
-        match = re.search(r'# SUBSCRIBE_URL: (.*?)(\r?\n|$)', content)
-        if match and match.group(1).strip():
-            logger.info(f"从配置文件中获取到订阅地址: {match.group(1).strip()}")
-            return match.group(1).strip()
-        
-        logger.info("配置文件中未找到有效的订阅地址")
-        return ""
-    except Exception as e:
-        logger.error(f"从配置文件中获取订阅地址失败: {str(e)}")
-        return ""
-
-def save_subscribe_url_to_config(subscribe_url, content=None):
-    """将订阅地址保存到配置文件"""
-    # 移除订阅地址中可能已有的&flag=clash或?flag=clash
-    clean_url = re.sub(r'[&?]flag=clash$', '', subscribe_url)
-    
-    if not os.path.exists(CONFIG_FILE):
-        # 如果配置文件不存在，创建一个包含订阅地址的空配置
-        logger.info(f"配置文件不存在，创建新文件: {CONFIG_FILE}")
-        try:
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                f.write(f"# SUBSCRIBE_URL: {clean_url}\n")
-            logger.info(f"创建了包含订阅地址的新配置文件: {clean_url}")
-            return True
-        except Exception as e:
-            logger.error(f"创建配置文件失败: {str(e)}")
-            return False
-        
-    try:
-        if content is None:
-            # 读取现有配置
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                content = f.read()
-        
-        # 检查是否已有订阅地址标记
-        if re.search(r'# SUBSCRIBE_URL:', content):
-            # 更新现有的订阅地址
-            new_content = re.sub(r'# SUBSCRIBE_URL: .*?(\r?\n|$)', 
-                            f"# SUBSCRIBE_URL: {clean_url}\n", content)
-            logger.info(f"更新了现有的订阅地址: {clean_url}")
-        else:
-            # 在文件开头添加订阅地址
-            new_content = f"# SUBSCRIBE_URL: {clean_url}\n" + content
-            logger.info(f"添加了新的订阅地址: {clean_url}")
-        
-        # 保存修改后的配置
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-            
-        logger.info(f"订阅地址已保存到配置文件: {clean_url}")
-        return True
-    except Exception as e:
-        logger.error(f"保存订阅地址到配置文件失败: {str(e)}")
-        return False
+# 移除了从配置文件获取和保存订阅地址的函数
 
 def add_clash_flag_to_url(url):
     """向URL添加flag=clash参数"""
@@ -241,17 +176,10 @@ def index():
 
 @app.route('/get_subscribe_info')
 def get_subscribe_info():
-    """获取保存的订阅信息"""
-    try:
-        subscribe_url = get_subscribe_url_from_config()
-        logger.info(f"获取订阅地址API: {subscribe_url}")
-        
-        # 确保返回有效的JSON响应
-        response = {"subscribe_url": subscribe_url}
-        return jsonify(response)
-    except Exception as e:
-        logger.error(f"获取订阅信息失败: {str(e)}")
-        return jsonify({"subscribe_url": ""}), 500
+    """获取订阅信息（已废弃，保留API兼容性）"""
+    logger.info("获取订阅地址API（已废弃）")
+    # 返回空订阅地址，不再从配置文件读取
+    return jsonify({"subscribe_url": ""})
 
 @app.route('/get_api_url')
 def get_api_url():
@@ -300,10 +228,7 @@ def update_config():
             logger.error("订阅地址为空")
             return jsonify({"status": "error", "message": "订阅地址不能为空"}), 400
         
-        showStatus(None, "正在保存订阅地址...")
-        # 先保存订阅地址，确保地址不会丢失
-        # 这里保存原始地址，不添加flag=clash
-        save_subscribe_url_to_config(subscribe_url)
+        showStatus(None, "正在准备下载配置...")
         
         showStatus(None, "正在从服务器下载配置...")
         # 为下载添加flag=clash
@@ -353,15 +278,11 @@ def update_config():
                 logger.error(error_msg)
                 return jsonify({"status": "error", "message": error_msg}), 500
             
-            # 保存配置文件前先应用订阅地址
-            # 使用原始地址，而不是带flag=clash的
-            config_with_url = f"# SUBSCRIBE_URL: {subscribe_url}\n" + config_content
-            
-            # 直接写入带有订阅地址的配置
+            # 直接写入配置，不再保存订阅地址
             with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                f.write(config_with_url)
+                f.write(config_content)
                 
-            logger.info(f"配置文件(含订阅地址)已保存到: {CONFIG_FILE}")
+            logger.info(f"配置文件已保存到: {CONFIG_FILE}")
         except Exception as e:
             error_msg = f"保存配置文件失败: {str(e)}"
             logger.error(error_msg)
@@ -447,7 +368,6 @@ def health_check():
     """健康检查接口"""
     config_exists = os.path.exists(CONFIG_FILE)
     config_size = os.path.getsize(CONFIG_FILE) if config_exists else 0
-    subscribe_url = get_subscribe_url_from_config()
     api_url, _ = get_clash_api_url()
     
     return jsonify({
@@ -456,9 +376,6 @@ def health_check():
         "config_file": CONFIG_FILE,
         "config_exists": config_exists,
         "config_size": config_size,
-        "subscribe_info": {
-            "subscribe_url": subscribe_url
-        },
         "api_url": api_url
     })
 
@@ -516,10 +433,6 @@ if __name__ == '__main__':
     # 在启动时记录配置文件状态
     config_exists = os.path.exists(CONFIG_FILE)
     logger.info(f"配置文件存在: {config_exists}")
-    
-    if config_exists:
-        subscribe_url = get_subscribe_url_from_config()
-        logger.info(f"当前订阅地址: {subscribe_url}")
     
     # 启动Flask应用
     app.run(host='0.0.0.0', port=7888, debug=False)

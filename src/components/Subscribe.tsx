@@ -36,14 +36,7 @@ function Subscribe() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [debugInfo, setDebugInfo] = React.useState<string | null>(null);
 
-  // 处理订阅地址，移除flag=clash后缀
-  const cleanSubscribeUrl = (url: string): string => {
-    if (!url) return '';
-    // 移除&flag=clash或?flag=clash
-    return url.replace(/[&?]flag=clash$/, '');
-  };
-
-  // 尝试不同的请求方式来解决通信问题
+    // 尝试不同的请求方式来解决通信问题
   const fetchWithFallback = React.useCallback(async (url: string, options: FetchOptions = {}) => {
     const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
     
@@ -106,29 +99,7 @@ function Subscribe() {
     }
   }, []);
 
-  // 获取保存的订阅信息
-  const fetchSubscribeInfo = React.useCallback(async () => {
-    try {
-      console.log('获取保存的订阅信息...');
-      const response = await fetchWithFallback('/sub/get_subscribe_info');
-      const data = await response.json() as SubscribeInfo;
-      console.log('获取到订阅信息:', data);
-      
-      if (data && data.subscribe_url) {
-        // 清理订阅URL，移除flag=clash
-        const cleanedUrl = cleanSubscribeUrl(data.subscribe_url);
-        console.log('处理后的订阅地址:', cleanedUrl);
-        setSubscribeUrl(cleanedUrl);
-        console.log('已设置保存的订阅地址');
-        return { ...data, subscribe_url: cleanedUrl };
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('获取订阅信息失败:', error);
-      return { subscribe_url: '' };
-    }
-  }, [fetchWithFallback]);
+
 
   // 检查服务器健康状态
   const checkHealth = React.useCallback(async () => {
@@ -136,24 +107,13 @@ function Subscribe() {
       const response = await fetchWithFallback('/sub/health');
       const data = await response.json();
       setDebugInfo(JSON.stringify(data, null, 2));
-      
-      // 如果健康检查中包含订阅信息，也设置一下
-      if (data && data.subscribe_info && data.subscribe_info.subscribe_url) {
-        // 只有当前为空且健康检查有信息时才更新
-        if (!subscribeUrl) {
-          const cleanedUrl = cleanSubscribeUrl(data.subscribe_info.subscribe_url);
-          console.log('从健康检查获取到订阅地址:', cleanedUrl);
-          setSubscribeUrl(cleanedUrl);
-        }
-      }
-      
       return data;
     } catch (error) {
       console.error('健康检查失败:', error);
       setDebugInfo(`健康检查失败: ${error instanceof Error ? error.message : '未知错误'}`);
       return null;
     }
-  }, [fetchWithFallback, subscribeUrl]);
+  }, [fetchWithFallback]);
 
   // 直接获取配置文件内容的函数
   const fetchConfig = React.useCallback(async () => {
@@ -187,18 +147,15 @@ function Subscribe() {
     }
   }, [checkHealth, fetchConfig]);
 
-  // 初始化时加载订阅信息和配置
+  // 初始化时加载配置
   React.useEffect(() => {
-    // 先获取保存的订阅地址
-    fetchSubscribeInfo().then(() => {
-      // 然后加载配置
-      loadConfig();
-    });
+    // 加载配置
+    loadConfig();
     
     // 定期检查健康状态
     const intervalId = setInterval(checkHealth, 15000);
     return () => clearInterval(intervalId);
-  }, [fetchSubscribeInfo, loadConfig, checkHealth]);
+  }, [loadConfig, checkHealth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
