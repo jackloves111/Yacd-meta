@@ -168,6 +168,42 @@ function Subscribe() {
     }
   }, [subscribeUrl]);
 
+  const handleReload = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchWithFallback('/sub/reload_config', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      if (!response.ok) throw new Error(`HTTP错误 ${response.status}`);
+      
+      const data = await response.json();
+      
+      setStatus({
+        visible: true,
+        type: data.status,
+        title: data.status === 'success' ? '成功' : '错误',
+        message: data.message
+      });
+      
+      if (data.status === 'success') {
+        await loadConfig();
+      }
+    } catch (error) {
+      setStatus({
+        visible: true,
+        type: 'error',
+        title: '错误',
+        message: `热加载失败: ${error instanceof Error ? error.message : '未知错误'}`
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -338,13 +374,21 @@ function Subscribe() {
                   style={inputStyle}
                 />
               </div>
-              <div style={{ textAlign: 'center' }}>
+              <div style={{ textAlign: 'center', display: 'flex', gap: '10px' }}>
                 <button
                   type="submit"
                   style={buttonStyle}
                   disabled={isLoading}
                 >
                   {isLoading ? t('更新中...') : t('更新配置')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReload}
+                  style={{ ...buttonStyle, background: '#27ae60' }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? t('加载中...') : t('热加载配置')}
                 </button>
               </div>
             </form>
