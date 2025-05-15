@@ -41,10 +41,7 @@ function TrafficNow({ apiConfig }) {
         <div>{t('Active Connections')}</div>
         <div>{connNumber}</div>
       </div>
-      <div className={s0.sec}>
-        <div>{t('Memory Usage')}</div>
-        <div>{mUsage}</div>
-      </div>
+
     </div>
   );
 }
@@ -67,15 +64,13 @@ function useConnection(apiConfig) {
     upTotal: '0 B',
     dlTotal: '0 B',
     connNumber: 0,
-    mUsage: '0 B',
   });
   const read = useCallback(
-    ({ downloadTotal, uploadTotal, connections, memory }) => {
+    ({ downloadTotal, uploadTotal, connections }) => {
       setState({
         upTotal: prettyBytes(uploadTotal),
         dlTotal: prettyBytes(downloadTotal),
-        connNumber: connections.length,
-        mUsage: prettyBytes(memory),
+        connNumber: connections.length
       });
     },
     [setState]

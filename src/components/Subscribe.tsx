@@ -20,7 +20,11 @@ interface SubscribeInfo {
 function Subscribe() {
   const [refContainer, containerHeight] = useRemainingViewPortHeight();
   const { t } = useTranslation();
-  const [subscribeUrl, setSubscribeUrl] = React.useState('');
+  const [subscribeUrl, setSubscribeUrl] = React.useState(() => {
+    // 从localStorage读取上次保存的订阅地址
+    const savedUrl = localStorage.getItem('subscribe_url');
+    return savedUrl || '';
+  });
   const [configContent, setConfigContent] = React.useState('加载配置中...');
   const [status, setStatus] = React.useState<{
     visible: boolean;
@@ -156,6 +160,13 @@ function Subscribe() {
     const intervalId = setInterval(checkHealth, 15000);
     return () => clearInterval(intervalId);
   }, [loadConfig, checkHealth]);
+
+  // 当订阅地址变更时保存到localStorage
+  React.useEffect(() => {
+    if (subscribeUrl) {
+      localStorage.setItem('subscribe_url', subscribeUrl);
+    }
+  }, [subscribeUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
