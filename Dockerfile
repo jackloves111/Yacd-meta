@@ -1,13 +1,12 @@
 # 第一阶段：构建前端
 FROM --platform=$BUILDPLATFORM node:alpine AS builder-frontend
 WORKDIR /app
-RUN npm i -g pnpm
-COPY pnpm-lock.yaml package.json ./
-RUN pnpm i
 COPY . .
-RUN pnpm build \
-  # 移除source map文件以减小镜像体积
-  && rm public/*.map || true
+RUN npm i -g pnpm \
+    && pnpm i \
+    && pnpm build \
+    # 移除source map文件以减小镜像体积
+    && rm public/*.map || true
 
 # 第二阶段：准备Python后端及最终镜像
 FROM python:3.9-alpine

@@ -6,11 +6,12 @@
 }
 
 body {
-    font-family: "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
     color: #333;
     background-color: #f5f5f5;
-    padding: 20px;
+    margin: 0;
+    padding: 0;
 }
 
 .container {
@@ -21,8 +22,8 @@ body {
 
 h1 {
     text-align: center;
+    color: #1a73e8;
     margin-bottom: 30px;
-    color: #2c3e50;
 }
 
 /* 卡片样式 */
@@ -46,124 +47,419 @@ h1 {
 label {
     display: block;
     margin-bottom: 8px;
-    font-weight: bold;
-    color: #2c3e50;
+    font-weight: 500;
 }
 
 .form-control {
     width: 100%;
-    padding: 12px 15px;
+    padding: 10px;
+    font-size: 14px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 16px;
-    transition: border-color 0.3s;
+    box-sizing: border-box;
 }
 
 .form-control:focus {
-    border-color: #3498db;
+    border-color: #1a73e8;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
 }
 
 .form-actions {
-    text-align: center;
+    text-align: right;
 }
 
 /* 按钮样式 */
 .btn {
     display: inline-block;
-    padding: 12px 24px;
-    background: #3498db;
-    color: white;
+    background-color: #f0f0f0;
     border: none;
+    color: #333;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
     border-radius: 4px;
-    font-size: 16px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.2s;
+    margin-right: 10px;
+}
+
+.btn:last-child {
+    margin-right: 0;
 }
 
 .btn:hover {
-    background: #2980b9;
+    background-color: #e0e0e0;
 }
 
 .btn-primary {
-    background: #3498db;
+    background-color: #1a73e8;
+    color: white;
 }
 
-/* 状态卡片 */
+.btn-primary:hover {
+    background-color: #1557b0;
+}
+
+.btn-refresh {
+    background-color: #34a853;
+    color: white;
+}
+
+.btn-refresh:hover {
+    background-color: #2a8843;
+}
+
+/* 状态卡片样式 */
 .status-card {
-    border-left: 4px solid #3498db;
+    transition: all 0.3s ease;
 }
 
-.status-card.success {
-    border-left-color: #2ecc71;
+.status-success {
+    border-left: 4px solid #34a853;
 }
 
-.status-card.error {
-    border-left-color: #e74c3c;
+.status-error {
+    border-left: 4px solid #ea4335;
 }
 
-.status-card.warning {
-    border-left-color: #f39c12;
+.status-processing {
+    border-left: 4px solid #1a73e8;
+}
+
+.status-warning {
+    border-left: 4px solid #fbbc04;
 }
 
 .hidden {
     display: none;
 }
 
-/* 信息区域 */
-.info-section {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* 进度条样式 */
+.progress-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #1a73e8;
 }
 
-.info-section h3 {
+.progress-bar {
+    height: 10px;
+    background-color: #f1f3f4;
+    border-radius: 5px;
     margin-bottom: 15px;
-    color: #2c3e50;
+    overflow: hidden;
 }
 
-.info-section ol {
-    padding-left: 20px;
+.progress-fill {
+    height: 100%;
+    background-color: #1a73e8;
+    border-radius: 5px;
+    width: 0%;
+    transition: width 0.3s ease;
 }
 
-.info-section li {
+.progress-steps {
+    margin-top: 20px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.step.active {
+    background-color: #e8f0fe;
+}
+
+.step.completed {
+    background-color: #e6f4ea;
+}
+
+.step.error {
+    background-color: #fce8e6;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #dadce0;
+    color: #5f6368;
+    border-radius: 50%;
+    margin-right: 10px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.step.active .step-number {
+    background-color: #1a73e8;
+    color: white;
+}
+
+.step.completed .step-number {
+    background-color: #34a853;
+    color: white;
+}
+
+.step.error .step-number {
+    background-color: #ea4335;
+    color: white;
+}
+
+.step-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.step-status {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.step.completed .step-status:before {
+    content: "✓";
+    color: #34a853;
+    margin-right: 5px;
+}
+
+.step.error .step-status:before {
+    content: "✗";
+    color: #ea4335;
+    margin-right: 5px;
+}
+
+/* API来源信息 */
+.api-source-info {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.api-source-info p {
+    font-size: 14px;
+    color: #5f6368;
+}
+
+#apiSource {
+    font-weight: 500;
+    color: #1a73e8;
+}
+
+/* 系统信息区域 */
+.system-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
     margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
+.info-label {
+    font-weight: 500;
+    min-width: 120px;
+    margin-right: 10px;
+}
+
+.info-value {
+    color: #1a73e8;
+    word-break: break-all;
+}
+
+.info-value a {
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.info-value a:hover {
+    text-decoration: underline;
+}
+
+.info-actions {
+    margin-top: 15px;
+}
+
+/* 配置显示区域 */
 .config-section {
-    margin-top: 2rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
+    margin-top: 30px;
 }
 
 .config-container {
-    max-height: 500px;
-    overflow-y: auto;
-    background: white;
-    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .config-content {
+    font-family: monospace;
     white-space: pre-wrap;
-    font-family: Monaco, Consolas, 'Courier New', monospace;
-    font-size: 0.9rem;
-    color: #495057;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 0;
 }
 
-.btn-refresh {
-    background: #17a2b8;
-    color: white;
-    padding: 8px 16px;
+.config-actions {
+    margin-top: 10px;
+    text-align: right;
+}
+
+/* 图标 */
+.icon-refresh:before {
+    content: "⟳";
+    margin-right: 5px;
+}
+
+/* 旋转动画 */
+.icon-spin {
+    display: inline-block;
+    animation: spin 1.5s infinite linear;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .form-actions {
+        text-align: center;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .info-label {
+        margin-bottom: 5px;
+    }
+}
+
+/* 错误详情相关样式 */
+.details-container {
+    margin-top: 15px;
+}
+
+.details-toggle {
+    background-color: #f1f3f4;
+    border: none;
     border-radius: 4px;
-    transition: background 0.3s ease;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.btn-refresh:hover {
-    background: #138496;
+.details-toggle:hover {
+    background-color: #e8eaed;
+}
+
+.details-content {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 13px;
+    border-left: 3px solid #ea4335;
+}
+
+.error-detail {
+    font-family: monospace;
+    white-space: pre-wrap;
+    color: #ea4335;
+    margin: 0;
+    font-size: 12px;
+}
+
+/* 输入组样式 */
+.input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-group .form-control {
+    flex: 1;
+    border-radius: 4px 0 0 4px;
+}
+
+.input-group .btn {
+    margin-right: 0;
+    border-radius: 0 4px 4px 0;
+}
+
+/* 重置按钮增强样式 */
+#resetUrlBtn {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-left: none;
+    background-color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+#resetUrlBtn:hover {
+    background-color: #f1f1f1;
+}
+
+/* 添加重置图标 */
+#resetUrlBtn:before {
+    content: "↺";
+    font-weight: bold;
+    font-size: 16px;
+    color: #1a73e8;
+}
+
+/* 添加点击波纹效果 */
+#resetUrlBtn:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #3498db 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform .5s, opacity 1s;
+}
+
+#resetUrlBtn:active:after {
+    transform: scale(0, 0);
+    opacity: .3;
+    transition: 0s;
 }
