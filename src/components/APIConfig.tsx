@@ -83,17 +83,8 @@ function APIConfig({ dispatch }) {
     [onConfirm]
   );
 
-  const detectApiServer = async () => {
-    // if there is already a clash API server at `/`, just use it as default value
-    const res = await fetch('/');
-    res.json().then((data) => {
-      if (data['hello'] === 'clash') {
-        setBaseURL(window.location.origin);
-      }
-    });
-  };
   useEffect(() => {
-    detectApiServer();
+    setBaseURL(`http://${window.location.hostname}:9090`);
   }, []);
 
   return (
@@ -111,7 +102,7 @@ function APIConfig({ dispatch }) {
             name="baseURL"
             label="API Base URL"
             type="text"
-            placeholder="http://127.0.0.1:9090"
+            placeholder={`http://${window.location.hostname}:9090`}
             value={baseURL}
             onChange={handleInputOnChange}
           />
