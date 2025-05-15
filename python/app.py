@@ -20,8 +20,7 @@ app = Flask(__name__, static_url_path='/static')
 CORS(app)
 
 # 配置文件路径 - 使用统一的配置文件路径
-CLASH_CONFIG_PATH = '/root/.config/clash/config.yaml'
-CONFIG_FILE = CLASH_CONFIG_PATH  # 使用统一的配置文件路径
+CONFIG_FILE = '/root/.config/clash/config.yaml'  # 统一使用Docker容器映射的配置文件路径
 
 # 默认Clash API端口
 DEFAULT_CLASH_PORT = 9090
@@ -106,9 +105,9 @@ def get_original_request_url():
 def hot_reload_clash_config(config_path=None):
     """向Clash API发送热加载配置的请求"""
     try:
-        # 如果没有提供配置路径，则使用默认路径
-        if config_path is None:
-            config_path = CONFIG_FILE
+        # 始终使用统一的配置文件路径，忽略传入的自定义路径
+        config_path = CONFIG_FILE
+        logger.info(f"热加载使用统一配置文件路径: {config_path}")
             
         # 获取API基础URL
         api_base_url, source = get_clash_api_url()
@@ -257,32 +256,14 @@ def update_config():
             logger.error(error_msg)
             return jsonify({"status": "error", "message": error_msg}), 500
         
-        showStatus(None, "正在保存配置文件...")
-        # 获取配置内容
+        # 保存配置文件
         try:
-            try:
-                config_content = response.content.decode('utf-8')
-            except UnicodeDecodeError:
-                error_msg = "配置文件内容解码失败，不是有效的文本文件"
-                logger.error(error_msg)
-                return jsonify({"status": "error", "message": error_msg}), 500
-            
-            # 检查是否为有效的配置文件 (简单验证)
-            if not config_content or len(config_content.strip()) < 10:
-                error_msg = "下载的配置文件内容为空或过短，可能不是有效的配置"
-                logger.error(error_msg)
-                return jsonify({"status": "error", "message": error_msg}), 500
-                
-            if not any(keyword in config_content for keyword in ['proxies:', 'proxy-groups:', 'rules:']):
-                error_msg = "下载的内容不像是有效的Clash配置文件，请检查订阅地址"
-                logger.error(error_msg)
-                return jsonify({"status": "error", "message": error_msg}), 500
-            
-            # 直接写入配置，不再保存订阅地址
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                f.write(config_content)
-                
+            with open(CONFIG_FILE, 'wb') as f:
+                f.write(response.content)
             logger.info(f"配置文件已保存到: {CONFIG_FILE}")
+        except IOError as e:
+            logger.error(f"保存配置文件失败: {str(e)}")
+            return jsonify({"status": "error", "message": f"保存配置文件失败: {str(e)}"}), 500
         except Exception as e:
             error_msg = f"保存配置文件失败: {str(e)}"
             logger.error(error_msg)
@@ -383,9 +364,9 @@ def health_check():
 def reload_config_endpoint():
     """手动触发Clash配置热加载的API端点"""
     try:
-        # 获取可能的配置文件路径
-        request_data = request.json or {}
-        config_path = request_data.get("config_path", CONFIG_FILE)
+        # 始终使用统一的配置文件路径
+        config_path = CONFIG_FILE
+        logger.info(f"使用统一配置文件路径进行热加载: {config_path}")
             
         success, message, source = hot_reload_clash_config(config_path)
         
