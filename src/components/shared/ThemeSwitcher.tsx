@@ -22,7 +22,7 @@ export function ThemeSwitcherImpl({ theme, dispatch }) {
         return <Sun />;
       default:
         console.assert(false, 'Unknown theme');
-        return <MoonA />;
+        return <Sun />;
     }
   }, [theme]);
 
