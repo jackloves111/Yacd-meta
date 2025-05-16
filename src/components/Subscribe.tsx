@@ -155,11 +155,8 @@ function Subscribe() {
   React.useEffect(() => {
     // 加载配置
     loadConfig();
-    
-    // 定期检查健康状态
-    const intervalId = setInterval(checkHealth, 15000);
-    return () => clearInterval(intervalId);
-  }, [loadConfig, checkHealth]);
+    // 移除定时健康检查，降低服务器负载
+  }, [loadConfig]);
 
   // 当订阅地址变更时保存到localStorage
   React.useEffect(() => {
