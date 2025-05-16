@@ -1,26 +1,46 @@
 name: Deploy
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'Dockerfile'
+      - 'docker/**'
+      - 'python/**'
+      - 'src/**'
+      - 'index.html'
+      - 'package.json'
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
+    name: 构建与部署
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Dashboard code
+      - name: 检出代码
         uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+
+      - name: '设置环境变量'
+        run: |
+          echo "YACD_VERSION=$(grep -m 1 '"version":' package.json | cut -d '"' -f 4)" >> $GITHUB_ENV
+
+      # GitHub Pages 部署部分
+      - name: 设置 PNPM
+        uses: pnpm/action-setup@v2
         with:
           version: latest
-      - name: Setup Nodejs
+
+      - name: 设置 Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
           cache: pnpm
-      - name: Install package and build
+
+      - name: 安装依赖并构建
         run: |
           pnpm install --no-frozen-lockfile
           pnpm build
-      - name: Deploy
+
+      - name: 部署到 GitHub Pages
         uses: crazy-max/ghaction-github-pages@v2
         with:
           target_branch: gh-pages
@@ -28,3 +48,33 @@ jobs:
           fqdn: yacd.metacubex.one
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Docker 构建部分
+      - name: 设置 QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+
+      - name: 设置 Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+
+      - name: 登录到 DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 构建并推送 Docker 镜像
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            metacubex/yacd:latest
+            metacubex/yacd:${{ env.YACD_VERSION }}
