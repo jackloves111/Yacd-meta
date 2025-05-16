@@ -43,9 +43,9 @@ const logLeveOptions = [
 ];
 
 const portFields = [
-  { key: 'port', label: 'Http Port' },
-  { key: 'socks-port', label: 'Socks5 Port' },
-  { key: 'mixed-port', label: 'Mixed Port' },
+  { key: 'port', label: 'Http 端口' },
+  { key: 'socks-port', label: 'Socks5 端口' },
+  { key: 'mixed-port', label: '混合端口​' },
   { key: 'redir-port', label: 'Redir Port' },
   { key: 'mitm-port', label: 'MITM Port' },
 ];
@@ -260,7 +260,7 @@ function ConfigImpl({
           )}
 
         <div>
-          <div className={s0.label}>Mode</div>
+          <div className={s0.label}>模式​</div>
           <Select
             options={configState['mode-list'] ? configState['mode-list'].map(value => [value, value]) : modeOptions}
             selected={configState['mode-list'] ? configState.mode : configState.mode.toLowerCase()}
