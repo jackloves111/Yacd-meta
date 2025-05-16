@@ -58,10 +58,10 @@ const langOptions = [
 ];
 
 const modeOptions = [
-  ['direct', 'Direct'],
-  ['rule', 'Rule'],
-  ['script', 'Script'],
-  ['global', 'Global'],
+  ['direct', '直连'],
+  ['rule', '规则组'],
+  ['script', '脚本'],
+  ['global', '全局代理'],
 ];
 
 const tunStackOptions = [
