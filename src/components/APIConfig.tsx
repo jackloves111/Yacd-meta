@@ -100,7 +100,7 @@ function APIConfig({ dispatch }) {
           <Field
             id="baseURL"
             name="baseURL"
-            label="API Base URL"
+            label="Clash API URL"
             type="text"
             placeholder={`http://${window.location.hostname}:9090`}
             value={baseURL}
@@ -109,7 +109,7 @@ function APIConfig({ dispatch }) {
           <Field
             id="secret"
             name="secret"
-            label="Secret(optional)"
+            label="Secret密钥(默认留空)"
             value={secret}
             type="text"
             onChange={handleInputOnChange}

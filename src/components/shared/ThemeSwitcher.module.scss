@@ -27,7 +27,7 @@
   height: var(--sz);
   select {
     cursor: pointer;
-    padding-left: 10px;
+    padding: 0 10px;
     width: var(--sz);
     height: var(--sz);
     appearance: none;
@@ -44,6 +44,7 @@
       // Chrome and Safari use the native menu
       background: var(--color-bg-sidebar);
       color: var(--color-text) !important;
+      padding: 0 10px;
     }
   }
   .iconWrapper {

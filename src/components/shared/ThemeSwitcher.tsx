@@ -36,9 +36,9 @@ export function ThemeSwitcherImpl({ theme, dispatch }) {
       <div className={s.themeSwitchContainer}>
         <span className={s.iconWrapper}>{themeIcon}</span>
         <select onChange={onChange} value={theme}>
-          <option value="light" style="margin-right: 10px;">Light</option>
-          <option value="auto" style="margin-right: 10px;">Auto</option>
-          <option value="dark" style="margin-right: 10px;">Dark</option>
+          <option value="light">Light</option>
+          <option value="auto">Auto</option>
+          <option value="dark">Dark</option>
         </select>
       </div>
     </Tooltip>
