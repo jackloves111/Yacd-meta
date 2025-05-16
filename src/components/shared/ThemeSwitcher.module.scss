@@ -27,8 +27,7 @@
   height: var(--sz);
   select {
     cursor: pointer;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 10px;
     width: var(--sz);
     height: var(--sz);
     appearance: none;
@@ -37,7 +36,6 @@
     border: 1px solid transparent;
     background: var(--color-bg-sidebar);
     color: transparent;
-    font-size: 0;
     &:focus {
       border-color: var(--color-focus-blue);
     }
@@ -45,7 +43,7 @@
       // this has effect in Firefox
       // Chrome and Safari use the native menu
       background: var(--color-bg-sidebar);
-      color: currentColor;
+      color: var(--color-text) !important;
     }
   }
   .iconWrapper {
