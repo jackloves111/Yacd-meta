@@ -161,7 +161,7 @@ const defaultState: StateApp = {
 
   latencyTestUrl: 'https://www.gstatic.com/generate_204',
   selectedChartStyleIndex: 0,
-  theme: 'dark',
+  theme: 'light', // 从'dark'改为'light'
 
   // type { [string]: boolean }
   collapsibleIsOpen: {},

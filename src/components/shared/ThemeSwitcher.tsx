@@ -35,10 +35,10 @@ export function ThemeSwitcherImpl({ theme, dispatch }) {
     <Tooltip label={t('switch_theme')} aria-label={'switch theme'}>
       <div className={s.themeSwitchContainer}>
         <span className={s.iconWrapper}>{themeIcon}</span>
-        <select onChange={onChange}>
+        <select onChange={onChange} value={theme}>
+          <option value="light">Light</option>
           <option value="auto">Auto</option>
           <option value="dark">Dark</option>
-          <option value="light">Light</option>
         </select>
       </div>
     </Tooltip>
