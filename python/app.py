@@ -19,8 +19,21 @@ app = Flask(__name__, static_url_path='/static')
 # 启用CORS
 CORS(app)
 
-# 配置文件路径 - 使用统一的配置文件路径
-CONFIG_FILE = '/root/.config/clash/config.yaml'  # 统一使用Docker容器映射的配置文件路径
+# 配置文件路径 - 支持环境变量配置或使用默认路径
+CONFIG_FILE = os.environ.get('CLASH_CONFIG_PATH', '/root/.config/clash/config.yaml')
+logger.info(f"使用配置文件路径: {CONFIG_FILE}")
+
+# 检查配置目录是否存在，如果不存在则尝试创建
+try:
+    config_dir = os.path.dirname(CONFIG_FILE)
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir, exist_ok=True)
+        logger.info(f"已创建配置目录: {config_dir}")
+except Exception as e:
+    logger.warning(f"检查或创建配置目录时出错: {str(e)}")
+    # 如果无法创建指定目录，尝试使用当前目录
+    CONFIG_FILE = os.path.join(os.getcwd(), 'config.yaml')
+    logger.info(f"已切换到备用配置路径: {CONFIG_FILE}")
 
 # 默认Clash API端口
 DEFAULT_CLASH_PORT = 9090
@@ -408,8 +421,58 @@ def get_task_status():
 
 if __name__ == '__main__':
     logger.info(f"Python 订阅应用启动在 0.0.0.0:7888，配置文件路径: {CONFIG_FILE}")
+    
     # 确保配置目录存在
-    os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+    try:
+        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+        logger.info(f"确保配置目录存在: {os.path.dirname(CONFIG_FILE)}")
+    except Exception as e:
+        logger.error(f"创建配置目录失败: {str(e)}")
+        # 继续执行，不要因为目录创建失败而中断启动
+    
+    # 检查并生成默认配置
+    if not os.path.exists(CONFIG_FILE):
+        # 修改默认配置生成方式
+        default_config = (
+            "port: 7890\n"
+            "socks-port: 7891\n"
+            "allow-lan: true\n"
+            "bind-address: '*'\n" 
+            "mode: rule\n"
+            "log-level: info\n"
+            "external-controller: '0.0.0.0:9090'"
+        )
+        try:
+            # 先尝试创建一个临时文件测试写入权限
+            temp_file = os.path.join(os.path.dirname(CONFIG_FILE), 'temp_test.txt')
+            with open(temp_file, 'w') as f:
+                f.write('test')
+            os.remove(temp_file)
+            logger.info("写入权限测试成功")
+            
+            # 创建配置文件
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                f.write(default_config.strip())
+            logger.info(f"已生成默认配置文件: {CONFIG_FILE}")
+            try:
+                os.chmod(CONFIG_FILE, 0o600)  # 设置适当文件权限
+            except Exception as e:
+                logger.warning(f"设置配置文件权限失败: {str(e)}")
+        except Exception as e:
+            logger.error(f"创建默认配置文件失败: {str(e)}")
+            # 尝试使用备用路径
+            backup_config_file = './config.yaml'
+            logger.info(f"尝试使用备用配置路径: {backup_config_file}")
+            try:
+                with open(backup_config_file, 'w', encoding='utf-8') as f:
+                    f.write(default_config.strip())
+                logger.info(f"已在备用路径生成默认配置文件: {backup_config_file}")
+                # 更新全局配置文件路径
+                CONFIG_FILE = os.path.abspath(backup_config_file)
+                logger.info(f"已更新配置文件路径为: {CONFIG_FILE}")
+            except Exception as e2:
+                logger.error(f"在备用路径创建配置文件也失败: {str(e2)}")
+                # 继续执行，不要因为配置文件创建失败而中断启动
     
     # 在启动时记录配置文件状态
     config_exists = os.path.exists(CONFIG_FILE)

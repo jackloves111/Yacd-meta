@@ -4,8 +4,12 @@ set -e
 # 打印欢迎信息
 echo "启动Yacd-meta服务..."
 
-# 确保配置目录存在
+# 确保配置目录存在并设置正确权限
 mkdir -p /root/.config/clash
+chmod -R 777 /root/.config/clash
+
+# 设置配置文件路径环境变量
+export CLASH_CONFIG_PATH="/root/.config/clash/config.yaml"
 
 # 设置默认的Clash API URL环境变量（仅用于初始显示）
 # Python后端将自动根据请求动态生成实际的API地址

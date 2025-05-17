@@ -28,8 +28,9 @@ RUN apk add --no-cache nginx dos2unix
 COPY python/ .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 创建Clash配置目录
-RUN mkdir -p /root/.config/clash
+# 创建Clash配置目录并设置适当权限
+RUN mkdir -p /root/.config/clash && \
+    chmod -R 777 /root/.config/clash
 
 # 移除默认Nginx内容并复制构建好的前端资源
 RUN rm -rf /usr/share/nginx/html/*
