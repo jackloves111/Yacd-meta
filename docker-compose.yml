@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  clash-yacd:
+    image: clash:latest
+    container_name: 002-clash-yacs-7882
+    volumes:
+      - /volume2/vitepress/01-python/yacd/clash:/root/.config/clash
+    ports:
+      - "7882:80"
+    restart: always
+    networks:
+      - clash-network
+
+  clash:
+    image: dreamacro/clash:latest
+    container_name: 000-clash-9090
+    volumes:
+      - /volume2/vitepress/01-python/yacd/clash/config.yaml:/root/.config/clash/config.yaml
+    ports:
+      - "7890:7890/tcp"
+      - "7891:7891/tcp"
+      - "7890:7890/udp"
+      - "7891:7891/udp"
+      - "9090:9090"
+    restart: always
+    networks:
+      - clash-network
+
+networks:
+  clash-network:
+    driver: bridge
