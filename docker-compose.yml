@@ -2,8 +2,8 @@ version: '3'
 
 services:
   clash-yacd:
-    image: clash:latest
-    container_name: 002-clash-yacs-7882
+    image: yacd:latest
+    container_name: 002-clash-yacd-7882
     volumes:
       - /volume2/vitepress/01-python/yacd/clash:/root/.config/clash
     ports:
@@ -14,7 +14,7 @@ services:
 
   clash:
     image: dreamacro/clash:latest
-    container_name: 000-clash-9090
+    container_name: 001-clash-9090
     volumes:
       - /volume2/vitepress/01-python/yacd/clash/config.yaml:/root/.config/clash/config.yaml
     ports:
