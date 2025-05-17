@@ -3,6 +3,16 @@ name: Docker Build and Push
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker镜像标签'
+        required: false
+        default: 'latest'
+      build_platforms:
+        description: '构建平台类型 (逗号分隔)'
+        required: false
+        default: 'linux/amd64,linux/arm64'
 
 jobs:
   build-and-push:
@@ -28,8 +38,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ inputs.build_platforms || 'linux/amd64,linux/arm64' }}
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/yacd-meta:latest
-            ${{ secrets.DOCKER_USERNAME }}/yacd-meta:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/yacd-meta:${{ inputs.image_tag || 'latest' }}
