@@ -48,21 +48,21 @@ function APIConfig({ dispatch }) {
   const onConfirm = useCallback(() => {
     let unconfirmedBaseURL = baseURL;
     if (unconfirmedBaseURL) {
-      const prefix = baseURL.substring(0, 7);
-      if (prefix.includes(':/')) {
-        // same logic in verify function
-        if (prefix !== 'http://' && prefix !== 'https:/') {
-          return [1, 'Must starts with http:// or https://'];
-        }
-      } else if (window.location.protocol) {
-        // only append scheme when prefix does not include scheme and current location includes scheme
-        unconfirmedBaseURL = `${window.location.protocol}//${unconfirmedBaseURL}`;
+      // 自动补全协议前缀
+      if (!unconfirmedBaseURL.startsWith('http://') && !unconfirmedBaseURL.startsWith('https://')) {
+        const protocol = window.location.protocol || 'http:';
+        unconfirmedBaseURL = `${protocol}//${unconfirmedBaseURL}`;
       }
     }
+    
+    // 显示正在连接的提示
+    setErrMsg('正在连接...');
+    
     verify({ baseURL: unconfirmedBaseURL, secret }).then((ret) => {
       if (ret[0] !== Ok) {
         setErrMsg(ret[1]);
       } else {
+        setErrMsg('');
         dispatch(addClashAPIConfig({ baseURL: unconfirmedBaseURL, secret }));
       }
     });
@@ -84,7 +84,11 @@ function APIConfig({ dispatch }) {
   );
 
   useEffect(() => {
+    // 设置默认的API URL，使用当前页面的主机名
     setBaseURL(`http://${window.location.hostname}:9090`);
+    
+    // 如果用户尝试使用自定义主机名（如classh），请确保该主机名可以被解析
+    // 可能需要在hosts文件中添加对应的映射，或确保DNS服务器可以解析该主机名
   }, []);
 
   return (
@@ -109,7 +113,7 @@ function APIConfig({ dispatch }) {
           <Field
             id="secret"
             name="secret"
-            label="Secret密钥(默认留空)"
+            label="密钥(默认留空)"
             value={secret}
             type="text"
             onChange={handleInputOnChange}
@@ -130,24 +134,30 @@ export default connect(mapState)(APIConfig);
 
 async function verify(apiConfig: ClashAPIConfig): Promise<[number, string?]> {
   try {
-    new URL(apiConfig.baseURL);
-  } catch (e) {
-    if (apiConfig.baseURL) {
-      const prefix = apiConfig.baseURL.substring(0, 7);
-      if (prefix !== 'http://' && prefix !== 'https:/') {
-        return [1, 'Must starts with http:// or https://'];
+    // 检查URL格式
+    try {
+      new URL(apiConfig.baseURL);
+    } catch (e) {
+      return [1, '无效的URL格式'];
+    }
+    
+    // 尝试连接API
+    try {
+      const res = await fetchConfigs(apiConfig);
+      if (res.status > 399) {
+        return [1, res.statusText];
       }
+      return [Ok];
+    } catch (e) {
+      // 提供更详细的错误信息
+      console.error('连接失败:', e);
+      if (e instanceof TypeError && e.message.includes('Failed to fetch')) {
+        return [1, '无法连接到服务器，请检查主机名是否正确或网络连接是否可用'];
+      }
+      return [1, '连接失败，请确认Clash服务正在运行且地址正确'];
     }
-
-    return [1, 'Invalid URL'];
-  }
-  try {
-    const res = await fetchConfigs(apiConfig);
-    if (res.status > 399) {
-      return [1, res.statusText];
-    }
-    return [Ok];
   } catch (e) {
-    return [1, 'Failed to connect'];
+    console.error('验证过程出错:', e);
+    return [1, '验证过程出错'];
   }
 }
