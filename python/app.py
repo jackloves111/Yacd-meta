@@ -43,6 +43,73 @@ os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
 
 # 移除了从配置文件获取和保存订阅地址的函数
 
+def fix_clash_config_rules(content):
+    """
+    自动修复 Clash 配置文件中可能导致热加载失败的 rules 错误
+    例如 target 指向了不存在的 proxy/proxy-group
+    """
+    try:
+        import yaml
+        config = yaml.safe_load(content)
+        
+        if not config or not isinstance(config, dict):
+            return content
+            
+        proxies = [p.get('name') for p in config.get('proxies', []) if 'name' in p]
+        proxy_groups = [pg.get('name') for pg in config.get('proxy-groups', []) if 'name' in pg]
+        
+        # 内置合法 target
+        valid_targets = set(proxies + proxy_groups + ['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'])
+        
+        if not valid_targets or 'rules' not in config:
+            return content
+            
+        rules = config.get('rules', [])
+        new_rules = []
+        fixed_count = 0
+        
+        for rule in rules:
+            if not isinstance(rule, str):
+                new_rules.append(rule)
+                continue
+                
+            parts = rule.split(',')
+            target_idx = -1
+            if len(parts) >= 2 and parts[-1].strip() == 'no-resolve':
+                target_idx = -2
+                
+            if abs(target_idx) > len(parts):
+                new_rules.append(rule)
+                continue
+                
+            target = parts[target_idx].strip()
+            
+            if target not in valid_targets:
+                # 尝试修复：去除末尾的横杠或其他错误字符
+                fixed_target = target.rstrip('-')
+                if fixed_target not in valid_targets:
+                    # 如果仍然无效，回退到第一个代理组，或者 DIRECT
+                    fixed_target = proxy_groups[0] if proxy_groups else 'DIRECT'
+                
+                parts[target_idx] = fixed_target
+                new_rules.append(','.join(parts))
+                fixed_count += 1
+                logger.info(f"修复了无效规则: '{rule}' -> '{','.join(parts)}'")
+            else:
+                new_rules.append(rule)
+                
+        if fixed_count > 0:
+            config['rules'] = new_rules
+            # 将修正后的字典转换回 YAML 字符串
+            fixed_content = yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            logger.info(f"成功修复了 {fixed_count} 条无效规则")
+            return fixed_content
+            
+        return content
+    except Exception as e:
+        logger.error(f"修复 Clash 规则时发生异常: {str(e)}")
+        return content
+
 def add_clash_flag_to_url(url):
     """向URL添加flag=clash参数"""
     if not url:
@@ -291,6 +358,9 @@ def update_config():
             # 替换配置
             content = re.sub(r'mixed-port: 7890', 'port: 7890\nsocks-port: 7891', content)
             content = re.sub(r"external-controller: '127.0.0.1:9090'", "external-controller: '0.0.0.0:9090'", content)
+            
+            # 自动修正不合法的 Clash rules，确保热加载可以成功
+            content = fix_clash_config_rules(content)
             
             # 保存修改后的配置，确保订阅地址不丢失
             with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
