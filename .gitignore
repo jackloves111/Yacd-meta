@@ -1,2 +1,4 @@
 node_modules
 public
+python/__pycache__/app.cpython-312.pyc
+config.yaml
